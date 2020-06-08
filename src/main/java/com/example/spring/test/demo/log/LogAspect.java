@@ -3,9 +3,12 @@ package com.example.spring.test.demo.log;
 import com.alibaba.fastjson.JSON;
 import com.example.spring.test.demo.dto.LogDto;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.commons.lang3.ArrayUtils;
 import org.aspectj.lang.JoinPoint;
-import org.aspectj.lang.ProceedingJoinPoint;
-import org.aspectj.lang.annotation.*;
+import org.aspectj.lang.annotation.AfterReturning;
+import org.aspectj.lang.annotation.Aspect;
+import org.aspectj.lang.annotation.Before;
+import org.aspectj.lang.annotation.Pointcut;
 import org.aspectj.lang.reflect.MethodSignature;
 import org.springframework.stereotype.Component;
 import org.springframework.util.CollectionUtils;
@@ -15,8 +18,6 @@ import org.springframework.web.context.request.ServletRequestAttributes;
 import javax.servlet.http.HttpServletRequest;
 import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.Collections;
-import java.util.stream.Collectors;
 
 /**
  * @author zhao
@@ -48,15 +49,19 @@ public class LogAspect {
         // 通过这获取到方法的所有参数名称的字符串数组
         String[] parameterNames = methodSignature.getParameterNames();
         Class[] parameterTypeNames = methodSignature.getParameterTypes();
+        Object[] args= joinPoint.getArgs();
         // 接收到请求，记录请求内容
-        log.info("joinPoint:{}",JSON.toJSONString(parameterNames));
-        log.info("joinPoint:{}",JSON.toJSONString(parameterTypeNames));
         ServletRequestAttributes attributes = (ServletRequestAttributes) RequestContextHolder.getRequestAttributes();
         HttpServletRequest request = attributes.getRequest();
         LogDto logDto = new LogDto();
         logDto.setRemoteIp(request.getRemoteAddr());
         logDto.setMethods(joinPoint.getSignature().getDeclaringTypeName() + "." + joinPoint.getSignature().getName());
-        logDto.setArgs(Arrays.toString(joinPoint.getArgs()));
+        if(ArrayUtils.isNotEmpty(parameterNames)){
+            for (int i = 0; i < parameterNames.length; i++) {
+                parameterNames[i] = String.format("(%s)%s:%s",parameterTypeNames[i].getSimpleName(),parameterNames[i],args[i]);
+            }
+        }
+        logDto.setArgs(Arrays.toString(parameterNames));
         if(logDto.getStartTime()==null){
             logDto.setStartTime(System.currentTimeMillis());
             logDto.setOrder(1);

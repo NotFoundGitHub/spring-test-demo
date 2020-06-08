@@ -16,7 +16,7 @@ public class UserDaoImpl implements UserDao {
     @Override
     public UserDto getUserDtoById(Long id) {
         if(id < 10){
-            return UserDto.builder().id(id).name("test"+id).build();
+            return UserDto.builder().id(id).phone("123456789").name("test"+id).build();
         }
         return null;
     }
